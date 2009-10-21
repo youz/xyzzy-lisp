@@ -1,13 +1,16 @@
-(require 'cmu_loop)
+;;; utilities from Arc
 
 #+xyzzy
-(in-package "user")
+(require 'cmu_loop)
 
-(defmacro alias (f g)
+(in-package #+xyzzy "user"
+	    #-xyzzy "common-lisp-user")
+
+(defmacro falias (f g)
   `(setf (symbol-function ',f)
 	 (symbol-function ',g)))
 
-;;; from arc
+;;; functions
 (defun idfn (x) x)
 
 (defun testify (x)
@@ -19,6 +22,12 @@
 
 (defun pos (test seq)
   (position-if (testify test) seq))
+
+(defun rm (test seq)
+  (remove-if (testify test) seq))
+
+(defun keep (test seq) 
+  (remove-if-not (testify test) seq))
 
 (defun pair (xs &optional (f #'list))
   (cond ((null xs)
@@ -76,6 +85,10 @@
 
 (defun readc (&optional (is *standard-input*))
   (read-char is nil nil))
+
+(falias instring make-string-input-stream)
+(falias outstring make-string-output-stream)
+(falias inside get-output-stream-string)
 
 
 ;; macros
@@ -174,16 +187,6 @@
      ,@body))
 
 
-(defun rm (test seq)
-  (let ((f (testify test)))
-    (if (listp seq)
-	(remove-if f seq)
-      (coerce (remove-if f (coerce seq 'list)) 'string))))
-
-(defun keep (test seq) 
-  (rm (complement (testify test)) seq))
-
-
 
 ;;; hash
 (defmacro dohash ((var hash &optional result) &body body)
@@ -198,8 +201,7 @@
   (accum a (dohash ((k v) h) (a v))))
 
 
-;;; io
-
+;;; io-macro
 (defmacro w/infile ((var file . rest) &body body)
   `(with-open-file (,var ,file :direction :input :if-does-not-exists :error)
      ,@(if rest `((w/infile ,rest ,@body))
@@ -216,17 +218,13 @@
 	 body)))
 
 
-(alias instring make-string-input-stream)
-(alias outstring make-string-output-stream)
-(alias inside get-output-stream-string)
-
 (defmacro w/instring ((var str . rest) &body body)
   `(with-input-from-string (,var ,str)
      ,@(if rest `((w/instring ,rest ,@body))
 	 body)))
 
 (defmacro w/outstring (vars &body body)
-  `(let ,(mapcar #'(lambda (p) `(,p (make-string-output-stream)))
+  `(let ,(mapcar #'(lambda (p) `(,p (outstring)))
 		 vars)
      ,@body))
 
@@ -247,7 +245,7 @@
        (close ,var))))
 
 
-;;; indent
+#+xyzzy
 (mapcar
  #'(lambda (l)
      (let ((i (car l))
