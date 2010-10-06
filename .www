@@ -1,0 +1,73 @@
+;;; -*- mode: lisp; package: www -*-
+
+;;; setting file for www-mode
+
+(in-package "www")
+
+(require "ldrpin")
+(require "hatebu")
+(require "googl")
+
+(defun ldrpin-add-current-page ()
+  (interactive)
+  (ldrpin:ldrpin-add www-url www-page-title))
+
+(defun ldrpin-add-link ()
+  (interactive)
+  (multiple-value-bind (tag link from to) (www-view-point-link)
+    (when link
+      (ldrpin:ldrpin-add link (buffer-substring from to)))))
+
+(defun show-hatebu-comments ()
+  (interactive)
+  (hatebu:show-comments www-url))
+
+(defun remove-query (url)
+  (if (string-match "\\(.+\\)\\?.+$" url)
+      (match-string 1)
+    url))
+
+(defun copy-current-url ()
+  (interactive)
+  (let ((url (if (string-match "utm_source" www-url)
+		 (remove-query www-url)
+	       www-url)))
+    (copy-to-clipboard url)
+    (message "Copied: ~A" url)))
+
+(defun copy-shorten-url ()
+  (interactive)
+  (let* ((url (if (string-match "utm_source" www-url)
+		  (remove-query www-url)
+		www-url))
+	 (short (googl:shorten url)))
+    (copy-to-clipboard short)
+    (message "Copied: ~A (~A)" short www-url)))
+
+(defun popup-region (from to)
+  (interactive)
+  (interactive "r")
+  (popup-string (buffer-substring from to) to))
+
+(defun close-current-page ()
+  (interactive)
+  (let* ((bufn (www-buffer-src))
+	 (buf (find-buffer bufn)))
+    (when buf
+      (delete-buffer buf))
+    (delete-buffer (selected-buffer))))
+
+
+(let ((m *www-view-mode-map*))
+  (define-key m #\q 'www-close-current)
+  (define-key m #\Q 'www-exit-all)
+  (define-key m #\e 'user::lookup-current-word)
+  (define-key m '(#\C-c #\d) 'www::www-view-save-link)
+  (define-key m #\p 'ldrpin-add-current-page)
+  (define-key m #\P 'ldrpin-add-link)
+  (define-key m #\H 'show-hatebu-comments)
+  (define-key m #\c 'copy-current-url)
+  (define-key m #\C 'copy-shorten-url)
+  (define-key m '(#\a #\a) 'popup-region)
+  )
+
