@@ -45,7 +45,6 @@
     (message "Copied: ~A (~A)" short www-url)))
 
 (defun popup-region (from to)
-  (interactive)
   (interactive "r")
   (popup-string (buffer-substring from to) to))
 
