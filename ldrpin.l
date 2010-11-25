@@ -20,6 +20,8 @@
 (defvar *ldr-apikey* nil)
 (defvar *ldr-username* nil)
 (defvar *ldr-password* nil)
+(defvar *use-frame* t)
+(defvar *frame-name* "LDR Pins")
 
 (defparameter *adfeed-urls*
   '("pheedo\\.jp" "rssad\\.jp" "feedbunner" "feeds" "feedproxy.google.com"))
@@ -69,7 +71,7 @@
 
 (defun expand-url (url)
   (if (some #'(lambda (u) (string-match u url)) *adfeed-urls*)
-      (substitute-string (user:expand-short-url url) "\\?ref=rss" "")
+      (substitute-string (user:expand-short-url url t) "\\?ref=rss" "")
     url))
 
 
@@ -260,7 +262,9 @@
       
 (defun ldrpin-quit ()
   (interactive)
-  (kill-buffer (selected-buffer)))
+  (kill-buffer (selected-buffer))
+  (whenlet fr (and *use-frame* (find-pseudo-frame *frame-name*))
+    (delete-pseudo-frame fr)))
 
 
 ;;; showing hatena bookmark
@@ -312,6 +316,9 @@
 
 (defun user::ldrpin ()
   (interactive)
+  (when *use-frame*
+    (select-pseudo-frame (or (find-pseudo-frame *frame-name*)
+			     (new-pseudo-frame *frame-name*))))
   (set-buffer (get-buffer-create *ldrpin-buffer-name*))
   (setq buffer-read-only nil)
   (erase-buffer (selected-buffer))
