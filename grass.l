@@ -129,7 +129,7 @@
 (defvar *backup-readtable* nil)
 
 (defun sharp-w-reader (s c n)
-  (let ((grasscode (if (peek-char t s nil nil) (format nil "w~A" (read s)) "w")))
+  (let ((grasscode (format nil "w~A" (read s))))
     `(run ,grasscode :run ,(not (eql n 0)))))
 
 (defun enable-reader ()
